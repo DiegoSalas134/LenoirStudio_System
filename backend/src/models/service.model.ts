@@ -31,4 +31,27 @@ export class ServiceModel {
     const service = services[0];
     return service ?? null;
   }
+
+    static async findPricingByServiceId(id: number) {
+    const [rows] = await pool.query(
+      `SELECT
+          st.technique_id,
+          st.name AS technique_name,
+          sbp.base_price,
+          sbp.included_tones,
+          sbp.min_length,
+          sbp.included_length_through,
+          sbp.length_increment,
+          sbp.max_length,
+          sbp.length_natural_only
+       FROM service_base_price sbp
+       INNER JOIN service_technique st
+          ON sbp.technique_id = st.technique_id
+       WHERE sbp.service_id = ?
+       ORDER BY st.technique_id ASC`,
+      [id]
+    );
+
+    return rows;
+  }
 }
