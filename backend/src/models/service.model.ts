@@ -17,4 +17,18 @@ export class ServiceModel {
 
     return rows as Service[];
   }
+
+  static async findById(id: number): Promise<Service | null> {
+    const [rows] = await pool.query(
+      `SELECT service_id, name, duration_hours, base_price
+       FROM service
+       WHERE service_id = ?`,
+      [id]
+    );
+
+    const services = rows as Service[];
+
+    const service = services[0];
+    return service ?? null;
+  }
 }
