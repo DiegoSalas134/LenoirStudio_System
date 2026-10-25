@@ -54,4 +54,19 @@ export class ServiceModel {
 
     return rows;
   }
+    static async findAllOptions() {
+    const [rows] = await pool.query(
+      `SELECT
+          option_id,
+          category,
+          name,
+          unit_price,
+          is_per_nail,
+          unit_type
+       FROM service_option
+       ORDER BY category ASC, name ASC`
+    );
+
+    return rows;
+  }
 }
