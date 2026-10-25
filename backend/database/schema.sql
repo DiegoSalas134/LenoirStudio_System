@@ -1,4 +1,3 @@
-
 CREATE DATABASE IF NOT EXISTS lenoirstudio
     CHARACTER SET utf8mb4
     COLLATE utf8mb4_unicode_ci;
@@ -50,6 +49,9 @@ CREATE TABLE IF NOT EXISTS service_option (
     name VARCHAR(100) NOT NULL,
     unit_price DECIMAL(10,2) NOT NULL,
     is_per_nail BOOLEAN NOT NULL DEFAULT FALSE,
+    unit_type ENUM('per_nail', 'per_piece', 'per_tone', 'flat')
+        NOT NULL DEFAULT 'per_nail',
+
     CONSTRAINT chk_option_price CHECK (unit_price >= 0)
 ) ENGINE=InnoDB;
 
@@ -216,4 +218,59 @@ CREATE TABLE IF NOT EXISTS notification (
         FOREIGN KEY (appointment_id)
         REFERENCES appointment(appointment_id)
         ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+-- 13. techniques such as Softgel, Polygel, semi-permanent gel, Rubber Gel, and Builder Gel.
+CREATE TABLE IF NOT EXISTS service_technique (
+    technique_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(60) NOT NULL UNIQUE
+) ENGINE=InnoDB;
+
+-- 14. prices for service
+CREATE TABLE IF NOT EXISTS service_base_price (
+    price_id INT AUTO_INCREMENT PRIMARY KEY,
+    service_id INT NOT NULL,
+    technique_id INT NOT NULL,
+    base_price DECIMAL(10,2) NOT NULL,
+    included_tones INT NOT NULL DEFAULT 4,
+    min_length TINYINT NULL,
+    included_length_through TINYINT NULL,
+    length_increment DECIMAL(10,2) NOT NULL DEFAULT 0,
+    max_length TINYINT NULL,
+    length_natural_only BOOLEAN NOT NULL DEFAULT FALSE,
+
+    UNIQUE KEY uq_service_technique (service_id, technique_id),
+
+    CONSTRAINT fk_base_price_service
+        FOREIGN KEY (service_id)
+        REFERENCES service(service_id)
+        ON DELETE RESTRICT ON UPDATE CASCADE,
+
+    CONSTRAINT fk_base_price_technique
+        FOREIGN KEY (technique_id)
+        REFERENCES service_technique(technique_id)
+        ON DELETE RESTRICT ON UPDATE CASCADE,
+
+    CONSTRAINT chk_base_price_amount
+        CHECK (base_price >= 0),
+
+    CONSTRAINT chk_base_price_tones
+        CHECK (included_tones >= 0),
+
+    CONSTRAINT chk_base_price_increment
+        CHECK (length_increment >= 0)
+) ENGINE=InnoDB;
+
+-- 15. materials and removal costs
+CREATE TABLE IF NOT EXISTS removal_material (
+    material_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(60) NOT NULL UNIQUE,
+    price_per_nail DECIMAL(10,2) NOT NULL,
+    lenoir_price_per_nail DECIMAL(10,2) NOT NULL,
+
+    CONSTRAINT chk_removal_price
+        CHECK (price_per_nail >= 0),
+
+    CONSTRAINT chk_removal_lenoir_price
+        CHECK (lenoir_price_per_nail >= 0)
 ) ENGINE=InnoDB;
