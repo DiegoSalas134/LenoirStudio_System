@@ -1,4 +1,5 @@
 import { Router } from "express";
+import serviceRoutes from "./service.routes.js";
 
 export class AppRoutes {
   static get router(): Router {
@@ -10,6 +11,8 @@ export class AppRoutes {
         message: "LenoirStudio API funcionando correctamente"
       });
     });
+
+    router.use("/services", serviceRoutes);
 
     return router;
   }
