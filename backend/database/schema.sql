@@ -12,13 +12,12 @@ CREATE TABLE IF NOT EXISTS customer (
 ) ENGINE=InnoDB;
 
 -- 2. Services
+-- Prices are stored in service_base_price, not here.
 CREATE TABLE IF NOT EXISTS service (
     service_id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(50) NOT NULL UNIQUE,
     duration_hours DECIMAL(4,2) NOT NULL,
-    base_price DECIMAL(10,2) NOT NULL,
-    CONSTRAINT chk_service_duration CHECK (duration_hours > 0),
-    CONSTRAINT chk_service_price CHECK (base_price >= 0)
+    CONSTRAINT chk_service_duration CHECK (duration_hours > 0)
 ) ENGINE=InnoDB;
 
 -- 3. Inventory
@@ -42,16 +41,15 @@ CREATE TABLE IF NOT EXISTS admin (
 ) ENGINE=InnoDB;
 
 -- 5. Service options
--- Named service_option to avoid a potentially reserved SQL identifier.
+-- unit_type defines how the option is charged.
+-- No redundant is_per_nail column.
 CREATE TABLE IF NOT EXISTS service_option (
     option_id INT AUTO_INCREMENT PRIMARY KEY,
     category VARCHAR(50) NOT NULL,
     name VARCHAR(100) NOT NULL,
     unit_price DECIMAL(10,2) NOT NULL,
-    is_per_nail BOOLEAN NOT NULL DEFAULT FALSE,
     unit_type ENUM('per_nail', 'per_piece', 'per_tone', 'flat')
         NOT NULL DEFAULT 'per_nail',
-
     CONSTRAINT chk_option_price CHECK (unit_price >= 0)
 ) ENGINE=InnoDB;
 
@@ -73,15 +71,23 @@ CREATE TABLE IF NOT EXISTS appointment (
     end_time DATETIME NOT NULL,
     status VARCHAR(20) NOT NULL DEFAULT 'pending',
     total_price DECIMAL(12,2) NOT NULL DEFAULT 0,
-    quote_details JSON,
-    design_ref_path VARCHAR(255),
-    completed_at DATETIME,
+    quote_details JSON DEFAULT NULL,
+    design_ref_path VARCHAR(255) DEFAULT NULL,
+    completed_at DATETIME DEFAULT NULL,
     inventory_deducted BOOLEAN NOT NULL DEFAULT FALSE,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    -- Removal details: used only when removal is requested.
+    removal_required BOOLEAN NOT NULL DEFAULT FALSE,
+    removal_material_id INT DEFAULT NULL,
+    removal_nails TINYINT DEFAULT NULL,
+    removal_at_lenoir BOOLEAN DEFAULT NULL,
 
     INDEX idx_appointment_schedule (start_time, end_time),
     INDEX idx_appointment_status (status),
     INDEX idx_appointment_customer (customer_id),
+    INDEX idx_appointment_service (service_id),
+    INDEX idx_appointment_removal_material (removal_material_id),
 
     CONSTRAINT fk_appointment_customer
         FOREIGN KEY (customer_id)
@@ -93,6 +99,11 @@ CREATE TABLE IF NOT EXISTS appointment (
         REFERENCES service(service_id)
         ON DELETE RESTRICT ON UPDATE CASCADE,
 
+    CONSTRAINT fk_appointment_removal_material
+        FOREIGN KEY (removal_material_id)
+        REFERENCES removal_material(material_id)
+        ON DELETE RESTRICT ON UPDATE CASCADE,
+
     CONSTRAINT chk_appointment_status
         CHECK (status IN ('pending', 'confirmed', 'completed', 'cancelled')),
 
@@ -100,7 +111,10 @@ CREATE TABLE IF NOT EXISTS appointment (
         CHECK (end_time > start_time),
 
     CONSTRAINT chk_appointment_price
-        CHECK (total_price >= 0)
+        CHECK (total_price >= 0),
+
+    CONSTRAINT chk_appointment_removal_nails
+        CHECK (removal_nails IS NULL OR removal_nails BETWEEN 1 AND 10)
 ) ENGINE=InnoDB;
 
 -- 8. Materials used by each service
@@ -179,8 +193,8 @@ CREATE TABLE IF NOT EXISTS payment (
     payment_method VARCHAR(20) NOT NULL,
     payment_status VARCHAR(20) NOT NULL DEFAULT 'pending',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    paid_at DATETIME,
-    receipt_path VARCHAR(255),
+    paid_at DATETIME DEFAULT NULL,
+    receipt_path VARCHAR(255) DEFAULT NULL,
 
     INDEX idx_payment_appointment (appointment_id),
     INDEX idx_payment_paid_at (paid_at),
@@ -191,15 +205,11 @@ CREATE TABLE IF NOT EXISTS payment (
         REFERENCES appointment(appointment_id)
         ON DELETE RESTRICT ON UPDATE CASCADE,
 
-    CONSTRAINT chk_payment_amount
-        CHECK (amount > 0),
-
+    CONSTRAINT chk_payment_amount CHECK (amount > 0),
     CONSTRAINT chk_payment_type
         CHECK (payment_type IN ('deposit', 'installment', 'final')),
-
     CONSTRAINT chk_payment_method
         CHECK (payment_method IN ('cash', 'transfer', 'card')),
-
     CONSTRAINT chk_payment_status
         CHECK (payment_status IN ('pending', 'approved', 'refunded'))
 ) ENGINE=InnoDB;
@@ -220,23 +230,23 @@ CREATE TABLE IF NOT EXISTS notification (
         ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
--- 13. techniques such as Softgel, Polygel, semi-permanent gel, Rubber Gel, and Builder Gel.
+-- 13. Service techniques
 CREATE TABLE IF NOT EXISTS service_technique (
     technique_id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(60) NOT NULL UNIQUE
 ) ENGINE=InnoDB;
 
--- 14. prices for service
+-- 14. Base prices by service and technique
 CREATE TABLE IF NOT EXISTS service_base_price (
     price_id INT AUTO_INCREMENT PRIMARY KEY,
     service_id INT NOT NULL,
     technique_id INT NOT NULL,
     base_price DECIMAL(10,2) NOT NULL,
     included_tones INT NOT NULL DEFAULT 4,
-    min_length TINYINT NULL,
-    included_length_through TINYINT NULL,
+    min_length TINYINT DEFAULT NULL,
+    included_length_through TINYINT DEFAULT NULL,
     length_increment DECIMAL(10,2) NOT NULL DEFAULT 0,
-    max_length TINYINT NULL,
+    max_length TINYINT DEFAULT NULL,
     length_natural_only BOOLEAN NOT NULL DEFAULT FALSE,
 
     UNIQUE KEY uq_service_technique (service_id, technique_id),
@@ -251,26 +261,38 @@ CREATE TABLE IF NOT EXISTS service_base_price (
         REFERENCES service_technique(technique_id)
         ON DELETE RESTRICT ON UPDATE CASCADE,
 
-    CONSTRAINT chk_base_price_amount
-        CHECK (base_price >= 0),
-
-    CONSTRAINT chk_base_price_tones
-        CHECK (included_tones >= 0),
-
-    CONSTRAINT chk_base_price_increment
-        CHECK (length_increment >= 0)
+    CONSTRAINT chk_base_price_amount CHECK (base_price >= 0),
+    CONSTRAINT chk_base_price_tones CHECK (included_tones >= 0),
+    CONSTRAINT chk_base_price_increment CHECK (length_increment >= 0)
 ) ENGINE=InnoDB;
 
--- 15. materials and removal costs
+-- 15. Removal materials and prices per nail
 CREATE TABLE IF NOT EXISTS removal_material (
     material_id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(60) NOT NULL UNIQUE,
     price_per_nail DECIMAL(10,2) NOT NULL,
     lenoir_price_per_nail DECIMAL(10,2) NOT NULL,
 
-    CONSTRAINT chk_removal_price
-        CHECK (price_per_nail >= 0),
-
+    CONSTRAINT chk_removal_price CHECK (price_per_nail >= 0),
     CONSTRAINT chk_removal_lenoir_price
         CHECK (lenoir_price_per_nail >= 0)
+) ENGINE=InnoDB;
+
+-- 16. Options available for each service
+CREATE TABLE IF NOT EXISTS service_option_assignment (
+    service_id INT NOT NULL,
+    option_id INT NOT NULL,
+
+    PRIMARY KEY (service_id, option_id),
+    INDEX idx_assignment_option (option_id),
+
+    CONSTRAINT fk_assignment_service
+        FOREIGN KEY (service_id)
+        REFERENCES service(service_id)
+        ON DELETE RESTRICT ON UPDATE CASCADE,
+
+    CONSTRAINT fk_assignment_option
+        FOREIGN KEY (option_id)
+        REFERENCES service_option(option_id)
+        ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB;
