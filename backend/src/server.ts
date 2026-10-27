@@ -1,23 +1,21 @@
 import express, { Router } from "express";
 
-interface serverOptions{
-  port:number,
-  routes:Router
+interface ServerOptions {
+  port: number;
+  routes: Router;
 }
 
 export class Server {
-  server = express();
+  readonly app = express();
 
-  private readonly port: number;
-  
-  constructor(options:serverOptions) {
-    this.port = options.port;
-    this.server.use(express.json());
-    this.server.use('/api/v1', options.routes);
+  constructor(private readonly options: ServerOptions) {
+    this.app.use(express.json({ limit: "100kb" }));
+    this.app.use("/api/v1", options.routes);
   }
+
   start() {
-    this.server.listen(this.port, () => {
-      console.log(`server running on port: ${this.port}`);
+    this.app.listen(this.options.port, () => {
+      console.log(`server running on port: ${this.options.port}`);
     });
   }
 }
