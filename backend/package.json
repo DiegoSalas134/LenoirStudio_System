@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "vitest run",
+    "seed": "tsx src/seeds/seed.ts",
     "test:coverage": "vitest run --coverage ",
     "test:watch": "vitest",
     "start": "node ./src/app.js",
@@ -16,6 +17,7 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "express-validator": "^7.3.2",
@@ -24,11 +26,16 @@
     "vitest": "^5.0.5"
   },
   "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
     "@types/express": "^5.0.6",
     "@types/node": "^22.20.2",
     "@vitest/coverage-v8": "^5.0.5",
     "nodemon": "^3.1.14",
     "tsx": "^4.23.13",
     "typescript": "^7.0.2"
+  },
+  "allowScripts": {
+    "bcrypt@6.0.0": true,
+    "esbuild@0.28.2": true
   }
 }
