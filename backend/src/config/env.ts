@@ -23,6 +23,7 @@ export const env = {
   dbUser: process.env["DB_USER"] as string,
   dbPassword: process.env["DB_PASSWORD"] as string,
   dbName: (isTest ? process.env["DB_NAME_TEST"] : process.env["DB_NAME"]) as string,
+  isProduction: process.env["NODE_ENVIRONMENT"] === "production",
   jwtSecret: process.env["JWT_SECRET"] as string,
   isTest,
 };

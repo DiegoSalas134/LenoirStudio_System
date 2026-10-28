@@ -1,4 +1,6 @@
 import { Router } from "express";
+import { noStore } from "../middlewares/authenticate.ts";
+import { AuthRoutes } from "./auth.routes.ts";
 
 export class AppRoutes {
   static get router(): Router {
@@ -6,6 +8,8 @@ export class AppRoutes {
     router.get("/health", (_req, res) => {
       res.status(200).json({ status: "ok" });
     });
+    router.use("/admin", noStore);
+    router.use("/admin/auth", AuthRoutes.router);
     return router;
   }
 }
