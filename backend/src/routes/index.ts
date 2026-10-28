@@ -1,19 +1,15 @@
 import { Router } from "express";
-import serviceRoutes from "./service.routes.js";
+import { noStore } from "../middlewares/authenticate.ts";
+import { AuthRoutes } from "./auth.routes.ts";
 
 export class AppRoutes {
   static get router(): Router {
     const router = Router();
-
     router.get("/health", (_req, res) => {
-      res.status(200).json({
-        status: "ok",
-        message: "LenoirStudio API funcionando correctamente"
-      });
+      res.status(200).json({ status: "ok" });
     });
-
-    router.use("/services", serviceRoutes);
-
+    router.use("/admin", noStore);
+    router.use("/admin/auth", AuthRoutes.router);
     return router;
   }
 }

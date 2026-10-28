@@ -1,23 +1,28 @@
 import express, { Router } from "express";
+import helmet from "helmet";
+import cookieParser from "cookie-parser";
+import { AppError, errorHandler } from "./middlewares/errorHandler.ts";
 
-interface serverOptions{
-  port:number,
-  routes:Router
+interface ServerOptions {
+  port: number;
+  routes: Router;
 }
 
 export class Server {
-  server = express();
+  readonly app = express();
 
-  private readonly port: number;
-  
-  constructor(options:serverOptions) {
-    this.port = options.port;
-    this.server.use(express.json());
-    this.server.use('/api/v1', options.routes);
+  constructor(private readonly options: ServerOptions) {
+    this.app.use(helmet());
+    this.app.use(express.json({ limit: "100kb" }));
+    this.app.use(cookieParser());
+    this.app.use("/api/v1", options.routes);
+    this.app.use((_req, _res, next) => next(new AppError(404, "NOT_FOUND", "Route not found")));
+    this.app.use(errorHandler);
   }
+
   start() {
-    this.server.listen(this.port, () => {
-      console.log(`server running on port: ${this.port}`);
+    this.app.listen(this.options.port, () => {
+      console.log(`server running on port: ${this.options.port}`);
     });
   }
 }

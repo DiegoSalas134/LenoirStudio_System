@@ -9,7 +9,6 @@
     // See also https://aka.ms/tsconfig/module
     "module": "nodenext",
     "target": "esnext",
-    "moduleResolution": "nodenext",
     //"types": [],
     // For nodejs:
     // "lib": ["esnext"],
@@ -43,6 +42,8 @@
     "skipLibCheck": true,
 
 
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": true,
   },
   "include": ["./src/**/*.ts"],
   "exclude": ["./src/**/*.spec.ts", "./src/**/*.test.ts", "./dist", "node_modules"]
