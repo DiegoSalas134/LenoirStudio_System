@@ -1,24 +1,17 @@
-
 services:
-  mysql:
+  db:
     image: mysql:8.4
-    container_name: lenoirstudio-mysql
+    container_name: lenoir-db
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Define MYSQL_ROOT_PASSWORD en el archivo .env}
-      MYSQL_DATABASE: lenoirstudio
-      MYSQL_USER: lenoirstudio_app
-      MYSQL_PASSWORD: ${DB_PASSWORD:?Define DB_PASSWORD en el archivo .env}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
     ports:
-      - "127.0.0.1:3307:3306"
+      - "3306:3306"
     volumes:
-      - lenoirstudio_mysql_data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p\"$${MYSQL_ROOT_PASSWORD}\" --silent"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 40s
+      - lenoir_db_data:/var/lib/mysql
 
 volumes:
-  lenoirstudio_mysql_data:
+  lenoir_db_data:
