@@ -1,7 +1,6 @@
 import { Op } from "sequelize";
-import { CatalogItem } from "../models/index.ts";
 import { AppError } from "../middlewares/errorHandler.ts";
-
+import { CatalogItem, Quote } from "../models/index.ts";
 export interface QuoteInput {
   techniqueId: number;
   length: number;
@@ -80,5 +79,20 @@ export class QuoteService {
       removal,
       estimatedTotal: technique.price + lengthCharge + tonesCharge + decorationsTotal + (removal?.subtotal ?? 0),
     };
+  }
+    static async save(input: QuoteInput) {
+    const quote = await this.calculate(input);
+    const row = await Quote.create({ details: quote, estimatedTotal: quote.estimatedTotal });
+    return { code: row.code, ...quote };
+  }
+
+  static async list(limit = 50) {
+    const rows = await Quote.findAll({ order: [["id", "DESC"]], limit });
+    return rows.map((r) => ({
+      code: r.code,
+      estimatedTotal: r.estimatedTotal,
+      details: r.details,
+      createdAt: r.createdAt,
+    }));
   }
 }
