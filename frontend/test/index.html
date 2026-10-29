@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Le Noir Studio - prueba</title>
+  <style>
+    body { font-family: sans-serif; max-width: 640px; margin: 2rem auto; padding: 0 1rem; }
+    fieldset { margin-bottom: 1rem; }
+    label { display: block; margin: .4rem 0; }
+    table { width: 100%; border-collapse: collapse; }
+    td { padding: .25rem; border-bottom: 1px solid #ccc; }
+    td:last-child { text-align: right; }
+    .error { color: #b00020; }
+    .ok { color: #0a7a2f; }
+  </style>
+</head>
+<body>
+  <h1>Le Noir Studio - Calculadora de precios</h1>
+
+  <fieldset>
+    <legend>Paso 1: Técnica</legend>
+    <select id="technique"></select>
+  </fieldset>
+
+  <fieldset>
+    <legend>Paso 2: Largo</legend>
+    <select id="length"></select>
+  </fieldset>
+
+  <fieldset>
+    <legend>Paso 3: Tonos extra</legend>
+    <label>¿Cuántos tonos extra deseas? <input id="extraTones" type="number" min="0" max="20" value="0"></label>
+    <small id="tonesInfo"></small>
+  </fieldset>
+
+  <fieldset>
+    <legend>Paso 4: Decoraciones</legend>
+    <select id="decorationSelect"></select>
+    <input id="decorationQty" type="number" min="1" max="100" value="1">
+    <button id="addDecoration" type="button">Agregar</button>
+    <ul id="decorationList"></ul>
+  </fieldset>
+
+  <fieldset>
+    <legend>Paso 5: Retiro</legend>
+    <select id="removal"></select>
+    <label>Uñas: <input id="removalNails" type="number" min="1" max="10" value="1"></label>
+  </fieldset>
+
+  <h2>Resumen</h2>
+  <table id="summary"></table>
+  <p id="quoteError" class="error"></p>
+  <button id="saveQuote" type="button">Guardar cotización</button>
+  <p id="saveResult" class="ok"></p>
+
+  <hr>
+  <h2>Admin</h2>
+  <form id="loginForm">
+    <label>Usuario <input id="username" autocomplete="username"></label>
+    <label>Contraseña <input id="password" type="password" autocomplete="current-password"></label>
+    <button type="submit">Iniciar sesión</button>
+    <button id="logout" type="button">Cerrar sesión</button>
+  </form>
+  <p id="adminMessage"></p>
+  <button id="listQuotes" type="button">Ver cotizaciones guardadas</button>
+  <table id="quoteTable"></table>
+
+  <script src="app.js"></script>
+</body>
+</html>
