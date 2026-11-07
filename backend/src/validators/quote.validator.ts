@@ -1,4 +1,4 @@
-import { body } from "express-validator";
+import { body, param } from "express-validator";
 
 export const quoteValidator = [
   body("techniqueId").isInt({ min: 1 }).withMessage("techniqueId must be a positive integer").toInt(),
@@ -11,3 +11,5 @@ export const quoteValidator = [
   body("removal.id").optional().isInt({ min: 1 }).withMessage("removal id must be a positive integer").toInt(),
   body("removal.nailCount").optional().isInt({ min: 1, max: 10 }).withMessage("removal nailCount must be between 1 and 10").toInt(),
 ];
+
+export const quoteCodeValidator = [param("code").isUUID().withMessage("code must be a valid UUID")];
