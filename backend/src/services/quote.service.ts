@@ -1,6 +1,8 @@
 import { Op } from "sequelize";
 import { AppError } from "../middlewares/errorHandler.ts";
 import { CatalogItem, Quote } from "../models/index.ts";
+import { FileService } from "./file.service.ts";
+
 export interface QuoteInput {
   techniqueId: number;
   length: number;
@@ -80,10 +82,16 @@ export class QuoteService {
       estimatedTotal: technique.price + lengthCharge + tonesCharge + decorationsTotal + (removal?.subtotal ?? 0),
     };
   }
-    static async save(input: QuoteInput) {
+    static async save(input: QuoteInput, photo: Express.Multer.File | undefined) {
     const quote = await this.calculate(input);
-    const row = await Quote.create({ details: quote, estimatedTotal: quote.estimatedTotal });
-    return { code: row.code, ...quote };
+    const photoName = await FileService.saveImage(photo);
+    try{
+      const row = await Quote.create({ details: quote, estimatedTotal: quote.estimatedTotal });
+      return { code: row.code, ...quote };
+    } catch (error){
+      await FileService.remove(photoName);
+      throw error;
+    }
   }
 
   static async list(limit = 50) {
@@ -92,7 +100,14 @@ export class QuoteService {
       code: r.code,
       estimatedTotal: r.estimatedTotal,
       details: r.details,
+      photoUrl: `/api/v1/admin/quotes/${r.code}/photo`,
       createdAt: r.createdAt,
     }));
+  }
+
+  static async getPhotoPath(code: string): Promise<string> {
+    const row = await Quote.findOne({ where: { code } });
+    if (!row) throw new AppError(404, "NOT_FOUND", "Quote not found");
+    return FileService.pathOf(row.referencePhotoPath);
   }
 }

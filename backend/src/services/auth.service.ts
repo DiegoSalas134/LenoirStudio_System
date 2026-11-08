@@ -23,6 +23,7 @@ const revoked = new Map<string, number>();
 export class AuthService {
   static async login(username: string, password: string): Promise<string> {
     const admin = await Admin.findOne({ where: { username } });
+    
     const valid = await bcrypt.compare(password, admin?.passwordHash ?? DUMMY_HASH);
     if (!admin || !valid) {
       throw new AppError(401, "INVALID_CREDENTIALS", "Invalid username or password");
