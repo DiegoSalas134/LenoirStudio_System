@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { AppointmentRoutes } from "./appointment.routes.ts";
 import { AuthRoutes } from "./auth.routes.ts";
 import { QuoteRoutes } from "./quote.routes.ts";
 import { authenticate, noStore, requireAdmin } from "../middlewares/authenticate.ts";
@@ -12,7 +13,9 @@ export class AppRoutes {
     router.use("/admin", noStore);
     router.use("/admin/auth", AuthRoutes.router);
     router.use("/admin/quotes", authenticate, requireAdmin, QuoteRoutes.adminRouter);
+    router.use("/admin/appointments", authenticate, requireAdmin, AppointmentRoutes.adminRouter);
     router.use("/", QuoteRoutes.router);
+    router.use("/", AppointmentRoutes.router);
     return router;
   }
 }

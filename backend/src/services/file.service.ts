@@ -16,8 +16,8 @@ export class FileService {
     return null;
   }
 
-  static async saveImage(file: Express.Multer.File | undefined): Promise<string> {
-    if (!file) throw new AppError(400, "FILE_REQUIRED", "referencePhoto is required");
+  static async saveImage(file: Express.Multer.File | undefined, field = "referencePhoto"): Promise<string> {
+    if (!file) throw new AppError(400, "FILE_REQUIRED", `${field} is required`);
     const extension = this.detectExtension(file.buffer);
     if (!extension) throw new AppError(415, "UNSUPPORTED_FILE", "Only JPG or PNG images are allowed");
     await mkdir(env.uploadDir, { recursive: true });
