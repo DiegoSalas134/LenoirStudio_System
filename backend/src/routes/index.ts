@@ -13,6 +13,7 @@ export class AppRoutes {
     router.use("/admin", noStore);
     router.use("/admin/auth", AuthRoutes.router);
     router.use("/admin/quotes", authenticate, requireAdmin, QuoteRoutes.adminRouter);
+    router.use("/admin/appointments", authenticate, requireAdmin, AppointmentRoutes.adminRouter);
     router.use("/", QuoteRoutes.router);
     router.use("/", AppointmentRoutes.router);
     return router;

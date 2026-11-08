@@ -1,4 +1,4 @@
-import { body, query } from "express-validator";
+import { body, param, query } from "express-validator";
 
 // "(449) 123-4567", "449 123 4567" and "+52 449 123 4567" all become "4491234567"
 export const normalizePhone = (value: unknown): string => {
@@ -18,4 +18,16 @@ const dateOptions = { format: "YYYY-MM-DD", strictMode: true, delimiters: ["-"] 
 export const availabilityValidator = [
   query("from").isDate(dateOptions).withMessage("from must be a date in YYYY-MM-DD format"),
   query("to").isDate(dateOptions).withMessage("to must be a date in YYYY-MM-DD format"),
+];
+
+export const appointmentCodeValidator = [param("code").isUUID().withMessage("code must be a valid UUID")];
+
+export const appointmentListValidator = [
+  query("status").optional().isIn(["PENDING", "CONFIRMED", "CANCELLED", "COMPLETED"]).withMessage("invalid status filter"),
+];
+
+export const confirmValidator = [
+  ...appointmentCodeValidator,
+  body("finalTotal").optional().isInt({ min: 0, max: 100000 }).withMessage("finalTotal must be between 0 and 100000").toInt(),
+  body("depositAmount").isInt({ min: 0, max: 100000 }).withMessage("depositAmount must be between 0 and 100000").toInt(),
 ];

@@ -3,7 +3,13 @@ import { AppointmentController } from "../controllers/appointment.controller.ts"
 import { publicWriteLimiter } from "../middlewares/rateLimit.ts";
 import { upload } from "../middlewares/upload.ts";
 import { validate } from "../middlewares/validate.ts";
-import { appointmentValidator, availabilityValidator } from "../validators/appointment.validator.ts";
+import {
+  appointmentCodeValidator,
+  appointmentListValidator,
+  appointmentValidator,
+  availabilityValidator,
+  confirmValidator,
+} from "../validators/appointment.validator.ts";
 
 export class AppointmentRoutes {
   static get router(): Router {
@@ -17,6 +23,14 @@ export class AppointmentRoutes {
       validate,
       AppointmentController.create,
     );
+    return router;
+  }
+  static get adminRouter(): Router {
+    const router = Router();
+    router.get("/", appointmentListValidator, validate, AppointmentController.list);
+    router.get("/:code/receipt", appointmentCodeValidator, validate, AppointmentController.receipt);
+    router.patch("/:code/confirm", confirmValidator, validate, AppointmentController.confirm);
+    router.patch("/:code/cancel", appointmentCodeValidator, validate, AppointmentController.cancel);
     return router;
   }
 }
