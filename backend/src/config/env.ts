@@ -1,4 +1,5 @@
 import dotenv from "dotenv";
+import path from "node:path";
 
 dotenv.config();
 
@@ -26,4 +27,5 @@ export const env = {
   isProduction: process.env["NODE_ENVIRONMENT"] === "production",
   jwtSecret: process.env["JWT_SECRET"] as string,
   isTest,
+  uploadDir: path.resolve(process.env["UPLOAD_DIR"] ?? "uploads", isTest ? "test" : ""),
 };

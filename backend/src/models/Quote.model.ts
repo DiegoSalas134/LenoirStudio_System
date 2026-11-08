@@ -6,6 +6,7 @@ export class Quote extends Model {
   declare code: string;
   declare details: object;
   declare estimatedTotal: number;
+  declare referencePhotoPath: string;
   declare createdAt: Date;
 }
 
@@ -16,6 +17,7 @@ Quote.init(
     // Frozen breakdown: later catalog price changes never alter a saved quote
     details: { type: DataTypes.JSON, allowNull: false },
     estimatedTotal: { type: DataTypes.INTEGER, allowNull: false, validate: { min: 0 } },
+    referencePhotoPath: { type: DataTypes.STRING(100), allowNull: false },
   },
   { sequelize, tableName: "quotes" },
 );

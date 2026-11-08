@@ -1,6 +1,7 @@
 import express, { Router } from "express";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
+import cors from "cors";
 import { AppError, errorHandler } from "./middlewares/errorHandler.ts";
 import path from "node:path";
 
@@ -14,6 +15,12 @@ export class Server {
 
   constructor(private readonly options: ServerOptions) {
     this.app.use(helmet());
+
+    this.app.use(cors({
+      origin: ["http://127.0.0.1:5500", "http://localhost:5500"],
+      credentials: true
+    }));
+    
     this.app.use(express.json({ limit: "100kb" }));
     this.app.use(cookieParser());
     this.app.use(express.static(path.resolve(import.meta.dirname, "../../frontend/test")));

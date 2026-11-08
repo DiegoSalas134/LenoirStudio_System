@@ -9,3 +9,11 @@ export const loginRateLimiter = rateLimit({
   legacyHeaders: false,
   handler: (_req, _res, next) => next(new AppError(429, "TOO_MANY_REQUESTS", "Too many login attempts, try again later")),
 });
+
+export const publicWriteLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 30,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  handler: (_req, _res, next) => next(new AppError(429, "TOO_MANY_REQUESTS", "Too many requests, try again later")),
+});

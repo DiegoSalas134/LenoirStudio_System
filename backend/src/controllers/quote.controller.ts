@@ -12,12 +12,21 @@ export class QuoteController {
     res.status(200).json(quote);
   };
     static save = async (req: Request, res: Response): Promise<void> => {
+    console.log("Archivo interceptado por Multer:", req.file); 
+    console.log("Datos de la cotización:", req.body);
     const { techniqueId, length, extraTones = 0, decorations = [], removal = null } = req.body;
-    const saved = await QuoteService.save({ techniqueId, length, extraTones, decorations, removal });
+    const saved = await QuoteService.save({ techniqueId, length, extraTones, decorations, removal }, req.file);
     res.status(201).json(saved);
   };
 
   static list = async (_req: Request, res: Response): Promise<void> => {
     res.status(200).json(await QuoteService.list());
+  };
+
+  static photo = async (req: Request, res: Response): Promise<void> => {
+    const filePath = await QuoteService.getPhotoPath(String(req.params["code"]));
+    res.sendFile(filePath, (error) => {
+      if (error && !res.headersSent) res.status(404).json({ error: { code: "NOT_FOUND", message: "Photo not found" } });
+    });
   };
 }
