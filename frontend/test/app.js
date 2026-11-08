@@ -1,13 +1,19 @@
-const API = "/api/v1";
+const API = "http://127.0.0.1:3000/api/v1";
 const $ = (id) => document.getElementById(id);
 let catalog = null;
 let decorations = [];
 
 async function api(path, options = {}) {
-  const res = await fetch(API + path, {
-    headers: { "Content-Type": "application/json" },
-    ...options,
-  });
+  const config = { 
+    credentials: "include", 
+    ...options 
+  };
+  
+  if (options.body && !(options.body instanceof FormData)) {
+    config.headers = { "Content-Type": "application/json", ...options.headers };
+  }
+
+  const res = await fetch(API + path, config);
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data?.error?.message ?? `Error ${res.status}`);
   return data;
@@ -93,11 +99,50 @@ async function recalculate() {
   }
 }
 
+const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+
+function chosenPhoto() {
+  return $("referencePhoto").files[0] ?? null;
+}
+
+function checkPhoto() {
+  const file = chosenPhoto();
+  $("photoError").textContent = "";
+  $("photoPreview").hidden = true;
+  if (!file) return false;
+  if (!["image/jpeg", "image/png"].includes(file.type)) {
+    $("photoError").textContent = "La foto debe ser JPG o PNG.";
+    return false;
+  }
+  if (file.size > MAX_PHOTO_BYTES) {
+    $("photoError").textContent = "La foto no puede pesar más de 5 MB.";
+    return false;
+  }
+  const reader = new FileReader();
+  reader.addEventListener("load", () => {
+    $("photoPreview").src = reader.result;
+    $("photoPreview").hidden = false;
+  });
+  reader.readAsDataURL(file);
+  return true;
+}
+
 async function saveQuote() {
   $("saveResult").textContent = "";
+  $("quoteError").textContent = "";
+  if (!chosenPhoto()) {
+    $("photoError").textContent = "Sube una foto de referencia para guardar la cotización.";
+    return;
+  }
+  if (!checkPhoto()) return;
   try {
-    const saved = await api("/quotes", { method: "POST", body: JSON.stringify(payload()) });
+    const form = new FormData();
+    form.append("quote", JSON.stringify(payload()));
+    form.append("referencePhoto", chosenPhoto());
+    const saved = await api("/quotes", { method: "POST", body: form });
     $("saveResult").textContent = `Cotización guardada. Código: ${saved.code} - Total: ${money(saved.estimatedTotal)}`;
+    $("referencePhoto").value = "";
+    $("photoPreview").hidden = true;
   } catch (error) {
     $("quoteError").textContent = error.message;
   }
@@ -139,6 +184,12 @@ async function listQuotes() {
       tr.insertCell().textContent = q.details?.technique?.name ?? "-";
       tr.insertCell().textContent = q.code.slice(0, 8);
       tr.insertCell().textContent = money(q.estimatedTotal);
+      const link = document.createElement("a");
+      link.href = "http://127.0.0.1:3000" + q.photoUrl;
+      link.target = "_blank";
+      link.rel = "noopener";
+      link.textContent = "Ver foto";
+      tr.insertCell().append(link);
     }
   } catch (error) {
     $("adminMessage").textContent = `${error.message} (inicia sesión primero)`;
@@ -171,6 +222,7 @@ function init() {
   $("loginForm").addEventListener("submit", login);
   $("logout").addEventListener("click", logout);
   $("listQuotes").addEventListener("click", listQuotes);
+  $("referencePhoto").addEventListener("change", checkPhoto);
 
   updateLengthOptions();
   recalculate();
