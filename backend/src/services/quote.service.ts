@@ -86,7 +86,7 @@ export class QuoteService {
     const quote = await this.calculate(input);
     const photoName = await FileService.saveImage(photo);
     try{
-      const row = await Quote.create({ details: quote, estimatedTotal: quote.estimatedTotal });
+      const row = await Quote.create({ details: quote, estimatedTotal: quote.estimatedTotal, referencePhotoPath: photoName });
       return { code: row.code, ...quote };
     } catch (error){
       await FileService.remove(photoName);

@@ -12,6 +12,8 @@ export class QuoteController {
     res.status(200).json(quote);
   };
     static save = async (req: Request, res: Response): Promise<void> => {
+    console.log("Archivo interceptado por Multer:", req.file); 
+    console.log("Datos de la cotización:", req.body);
     const { techniqueId, length, extraTones = 0, decorations = [], removal = null } = req.body;
     const saved = await QuoteService.save({ techniqueId, length, extraTones, decorations, removal }, req.file);
     res.status(201).json(saved);
