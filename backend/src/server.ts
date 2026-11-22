@@ -3,7 +3,7 @@ import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import { AppError, errorHandler } from "./middlewares/errorHandler.ts";
-import path from "node:path";
+
 
 interface ServerOptions {
   port: number;
@@ -17,13 +17,12 @@ export class Server {
     this.app.use(helmet());
 
     this.app.use(cors({
-      origin: ["http://127.0.0.1:5500", "http://localhost:5500"],
+      origin: ["http://localhost:5173"],
       credentials: true
     }));
     
     this.app.use(express.json({ limit: "100kb" }));
     this.app.use(cookieParser());
-    this.app.use(express.static(path.resolve(import.meta.dirname, "../../frontend/test")));
     this.app.use("/api/v1", options.routes);
     this.app.use((_req, _res, next) => next(new AppError(404, "NOT_FOUND", "Route not found")));
     this.app.use(errorHandler);

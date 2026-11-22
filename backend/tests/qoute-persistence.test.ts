@@ -12,6 +12,11 @@ if (!env.isTest) throw new Error("Integration tests must run with NODE_ENVIRONME
 const { app } = new Server({ port: 0, routes: AppRoutes.router });
 const USER = "admin_quotes";
 const PASS = "Test-password-123";
+// 1x1 PNG: enough for the server to accept it as a valid image
+const PNG = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+  "base64",
+);
 let soft: CatalogItem;
 
 beforeAll(async () => {
@@ -27,7 +32,10 @@ afterAll(async () => {
 
 describe("POST /quotes (persisted)", () => {
   it("saves the quote with a code and the server-calculated total", async () => {
-    const res = await request(app).post("/api/v1/quotes").send({ techniqueId: soft.id, length: 5, extraTones: 2, estimatedTotal: 1 });
+    const res = await request(app)
+      .post("/api/v1/quotes")
+      .field("quote", JSON.stringify({ techniqueId: soft.id, length: 5, extraTones: 2, estimatedTotal: 1 }))
+      .attach("referencePhoto", PNG, "nails.png");
     expect(res.status).toBe(201);
     expect(res.body.code).toBeTruthy();
     expect(res.body.estimatedTotal).toBe(370);
@@ -37,7 +45,19 @@ describe("POST /quotes (persisted)", () => {
 
   it("does not save anything when the input is invalid", async () => {
     const before = await Quote.count();
-    const res = await request(app).post("/api/v1/quotes").send({ techniqueId: soft.id, length: 12 });
+    const res = await request(app)
+      .post("/api/v1/quotes")
+      .field("quote", JSON.stringify({ techniqueId: soft.id, length: 12 }))
+      .attach("referencePhoto", PNG, "nails.png");
+    expect(res.status).toBe(400);
+    expect(await Quote.count()).toBe(before);
+  });
+
+  it("rejects a quote without the reference photo", async () => {
+    const before = await Quote.count();
+    const res = await request(app)
+      .post("/api/v1/quotes")
+      .field("quote", JSON.stringify({ techniqueId: soft.id, length: 5 }));
     expect(res.status).toBe(400);
     expect(await Quote.count()).toBe(before);
   });
